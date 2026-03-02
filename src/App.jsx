@@ -802,7 +802,7 @@ export default function App() {
           <div style={{ textAlign:"center", marginBottom:12 }}>
             <img src={QR_IMG} alt="QR" style={{ width:140, height:140, imageRendering:"pixelated" }} />
             <div style={{ fontSize:12, fontWeight:700, color:C.mintDark, marginTop:6 }}>출력 QR</div>
-            <div style={{ fontSize:11, color:C.sub, marginTop:2 }}>아래 QR을 스캔하면 감열지가 출력됩니다</div>
+            <div style={{ fontSize:11, color:C.sub, marginTop:2 }}>QR코드를 스캔하면 감열지가 출력됩니다</div>
           </div>
           {/* Thermal paper */}
           <div style={{ width:280, margin:"0 auto", background:"#fff", border:"1px solid #ddd", borderRadius:4, padding:"16px 12px", fontFamily:"'Courier New', monospace", fontSize:11, lineHeight:1.6, color:"#222", boxShadow:"0 2px 8px rgba(0,0,0,0.08)" }}>
