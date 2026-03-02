@@ -341,17 +341,24 @@ export default function App() {
   // ─── RENDER ───
   const renderNavBar = (title, showBack) => (
     <div style={{ display:"flex", alignItems:"center", padding:"14px 16px", background:C.card, borderBottom:`1px solid ${C.border}`, position:"relative", zIndex:2 }}>
-      {showBack && (
-        <button onClick={page === "order" ? () => setPage("home") : goHome} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", padding:"4px 8px 4px 0", color:C.text }}>←</button>
+      {showBack ? (
+        <button onClick={page === "order" ? () => setPage("home") : goHome} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", padding:"4px 8px 4px 0", color:C.text, zIndex:1 }}>←</button>
+      ) : (
+        <div style={{ width:36 }} />
       )}
-      <span style={{ flex:1, fontWeight:700, fontSize:17, color:C.text, textAlign: showBack ? "left" : "center" }}>{title}</span>
-      {page !== "order" && (
-        <button onClick={() => openModal("cart")} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", position:"relative", padding:4, color:C.text }}>
+      <span style={{ flex:1, fontWeight:700, fontSize:17, color:C.text, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+        {!showBack && <img src={CI_IMG} alt="" style={{ height:28, objectFit:"contain" }} />}
+        {title}
+      </span>
+      {page !== "order" ? (
+        <button onClick={() => openModal("cart")} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", position:"relative", padding:4, color:C.text, zIndex:1 }}>
           🛒
           {cartCount > 0 && (
             <span style={{ position:"absolute", top:-2, right:-4, background:C.red, color:"#fff", fontSize:10, fontWeight:700, borderRadius:10, minWidth:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px" }}>{cartCount}</span>
           )}
         </button>
+      ) : (
+        <div style={{ width:36 }} />
       )}
     </div>
   );
@@ -405,7 +412,7 @@ export default function App() {
       {/* Categories Grid */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {CATS.map(cat => (
-          <button key={cat.id} onClick={() => goCat(cat.id)} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:"18px 14px", textAlign:"left", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", fontFamily:C.font, transition:"transform .15s" }}
+          <button key={cat.id} onClick={() => goCat(cat.id)} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:"18px 14px", textAlign:"center", cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", fontFamily:C.font, transition:"transform .15s" }}
             onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
             onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
@@ -780,13 +787,6 @@ export default function App() {
   // ─── Receipt (Thermal Print Preview) ───
   const renderReceipt = () => {
     const grouped = sortByCategory(cart);
-    const allDocs = [];
-    cart.forEach(c => {
-      if (c.qual?.docs) c.qual.docs.forEach(d => {
-        const label = c.qual.nc && c.count > 1 ? `${d} ${c.count}장` : d;
-        if (!allDocs.includes(label)) allDocs.push(label);
-      });
-    });
     return (
       <div style={{ ...sheetBase, maxHeight:"92%" }} onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 6px" }}>
@@ -796,9 +796,15 @@ export default function App() {
           <div style={{ fontSize:16, fontWeight:800, color:C.text }}>감열지 미리보기</div>
           <button onClick={closeModal} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:C.sub }}>✕</button>
         </div>
-        <div style={{ flex:1, overflow:"auto", padding:"0 16px 20px", display:"flex", justifyContent:"center" }}>
+        <div style={{ flex:1, overflow:"auto", padding:"0 16px 20px" }}>
+          {/* Print QR - outside the receipt */}
+          <div style={{ textAlign:"center", marginBottom:12 }}>
+            <img src={QR_IMG} alt="QR" style={{ width:140, height:140, imageRendering:"pixelated" }} />
+            <div style={{ fontSize:12, fontWeight:700, color:C.mintDark, marginTop:6 }}>출력 QR</div>
+            <div style={{ fontSize:11, color:C.sub, marginTop:2 }}>QR을 스캔하면 감열지가 출력됩니다</div>
+          </div>
           {/* Thermal paper */}
-          <div style={{ width:280, background:"#fff", border:"1px solid #ddd", borderRadius:4, padding:"16px 12px", fontFamily:"'Courier New', monospace", fontSize:11, lineHeight:1.6, color:"#222", boxShadow:"0 2px 8px rgba(0,0,0,0.08)" }}>
+          <div style={{ width:280, margin:"0 auto", background:"#fff", border:"1px solid #ddd", borderRadius:4, padding:"16px 12px", fontFamily:"'Courier New', monospace", fontSize:11, lineHeight:1.6, color:"#222", boxShadow:"0 2px 8px rgba(0,0,0,0.08)" }}>
             <div style={{ textAlign:"center", fontWeight:700, fontSize:13, marginBottom:4 }}>세종 민원 프리패스</div>
             <div style={{ textAlign:"center", fontSize:10, marginBottom:8, color:"#666" }}>요 청 서</div>
             <div style={{ borderTop:"2px dashed #999", marginBottom:8 }} />
@@ -821,6 +827,11 @@ export default function App() {
                     {Object.entries(c.options).map(([k,v]) => (
                       <div key={k} style={{ fontSize:10, color:"#555" }}>{k}: {v}</div>
                     ))}
+                    {c.qual?.docs?.length > 0 && (
+                      <div style={{ fontSize:10, color:"#888", marginTop:1 }}>
+                        필요서류: {c.qual.docs.map(d => c.qual.nc && c.count > 1 ? `${d} ${c.count}장` : d).join(", ")}
+                      </div>
+                    )}
                     <div style={{ textAlign:"right", fontSize:10, fontWeight:700 }}>
                       {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
                     </div>
@@ -829,31 +840,13 @@ export default function App() {
               </div>
             ))}
 
-            {allDocs.length > 0 && (
-              <>
-                <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
-                <div style={{ fontWeight:700, fontSize:10, marginBottom:2 }}>[ 필요서류 ]</div>
-                {allDocs.map((d,i) => <div key={i} style={{ fontSize:10, color:"#555" }}>{i+1}. {d}</div>)}
-              </>
-            )}
-
             <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
             <div style={{ display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:12 }}>
               <span>총 수수료</span>
               <span style={{ color: exempt ? "#22B573" : "#222" }}>{exempt ? "면제" : fmtFee(totalFee)}</span>
             </div>
             <div style={{ fontSize:10, color:"#666", marginTop:2 }}>총 {cart.length}건</div>
-
-            {/* QR Code */}
-            <div style={{ borderTop:"2px dashed #999", margin:"10px 0 8px" }} />
-            <div style={{ textAlign:"center" }}>
-              <img src={QR_IMG} alt="QR" style={{ width:120, height:120, imageRendering:"pixelated" }} />
-              <div style={{ fontSize:9, color:"#999", marginTop:4 }}>요청서 QR코드</div>
-            </div>
-
             <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
-            <div style={{ textAlign:"center", fontSize:9, color:"#999" }}>세종특별자치시 민원여권과</div>
-            <div style={{ textAlign:"center", fontSize:9, color:"#999" }}>감사합니다</div>
           </div>
         </div>
       </div>
@@ -882,14 +875,6 @@ export default function App() {
               <span>📶</span><span>🔋</span>
             </div>
           </div>
-
-          {/* Logo bar (home only) */}
-          {page === "home" && (
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"6px 16px 2px", background:C.card }}>
-              <img src={CI_IMG} alt="" style={{ height:36, objectFit:"contain" }} />
-              <span style={{ marginLeft:8, fontSize:14, fontWeight:800, color:C.mintDark }}>민원 프리패스</span>
-            </div>
-          )}
 
           {/* Nav Bar */}
           {renderNavBar(
