@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 
 // ─── Base64 Images ───
-const CHAR_IMG = "data:image/webp;base64,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";
+const CHAR_IMG = "data:image/webp;base64,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YmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QTgxQ0UyMkRERDhDMTFFREIzMzc4NTBGOUFFMzYwQTIiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QTgxQ0UyMkNERDhDMTFFREIzMzc4NTBGOUFFMzYwQTIiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIxLjAgKFdpbmRvd3MpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MzYzQTIxREE5Q0M4MTFFQkEwRUVBRkEwNTkxNUE4MDUiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6MzYzQTIxREI5Q0M4MTFFQkEwRUVBRkEwNTkxNUE4MDUiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4A";
+const QR_IMG = "data:image/webp;base64,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";
 const CI_IMG = "data:image/webp;base64,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";
 
 // ─── DATA ───
@@ -140,6 +141,27 @@ const C = {
 
 const fmtFee = (f) => f === 0 ? "무료" : f.toLocaleString() + "원";
 
+const CAT_ORDER = CATS.map(c => c.id);
+
+const sortByCategory = (cartItems) => {
+  const groups = {};
+  cartItems.forEach(c => {
+    const cat = c.item.cat;
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(c);
+  });
+  // Sort within each category by item id
+  const idOrder = ITEMS.map(it => it.id);
+  Object.values(groups).forEach(arr => arr.sort((a, b) => idOrder.indexOf(a.item.id) - idOrder.indexOf(b.item.id)));
+  // Return grouped in category order
+  const result = [];
+  CAT_ORDER.forEach(cat => {
+    if (groups[cat]) result.push({ cat, items: groups[cat] });
+  });
+  return result;
+};
+
+
 export default function App() {
   // ─── STATE ───
   const [page, setPage] = useState("home"); // home | cat | order
@@ -148,8 +170,12 @@ export default function App() {
   const [exempt, setExempt] = useState(false);
 
   // Modal: single state
-  const [modal, setModal] = useState(null); // null | "cart" | "detail" | "ai" | "aiLoad" | "docs"
+  const [modal, setModal] = useState(null); // null | "cart" | "detail" | "ai" | "aiLoad" | "docs" | "receipt"
   const [modalAnim, setModalAnim] = useState(false);
+
+  // Sub-modal for overlay on AI results
+  const [subModal, setSubModal] = useState(null); // null | "detail"
+  const [subModalAnim, setSubModalAnim] = useState(false);
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState(null);
@@ -179,10 +205,16 @@ export default function App() {
     setTimeout(() => setModalAnim(false), 300);
   }, []);
 
-  const closeModal = useCallback(() => setModal(null), []);
+  const closeModal = useCallback(() => { setModal(null); setSubModal(null); }, []);
+  const openSubModal = useCallback((type) => {
+    setSubModalAnim(true);
+    setSubModal(type);
+    setTimeout(() => setSubModalAnim(false), 300);
+  }, []);
+  const closeSubModal = useCallback(() => setSubModal(null), []);
 
   // ─── DETAIL SHEET ───
-  const openDetail = useCallback((item) => {
+  const openDetail = useCallback((item, fromAI = false) => {
     setDetailItem(item);
     setDetOpt(item.opts ? item.opts.split(",")[0] : null);
     const quals = QUALS[item.id];
@@ -191,8 +223,12 @@ export default function App() {
     setDetCount(1);
     setDetOptions({});
     setDetQty(1);
-    openModal("detail");
-  }, [openModal]);
+    if (fromAI) {
+      openSubModal("detail");
+    } else {
+      openModal("detail");
+    }
+  }, [openModal, openSubModal]);
 
   // ─── CART ───
   const addToCart = useCallback(() => {
@@ -209,8 +245,12 @@ export default function App() {
       qty: detQty,
     };
     setCart(prev => [...prev, entry]);
-    closeModal();
-  }, [detailItem, detOpt, detQual, detTarget, detCount, detOptions, detQty, closeModal]);
+    if (subModal) {
+      closeSubModal();
+    } else {
+      closeModal();
+    }
+  }, [detailItem, detOpt, detQual, detTarget, detCount, detOptions, detQty, closeModal, subModal, closeSubModal]);
 
   const removeFromCart = useCallback((key) => {
     setCart(prev => prev.filter(c => c.key !== key));
@@ -229,6 +269,7 @@ export default function App() {
 
   // ─── AI ───
   const runAI = useCallback((q) => {
+    inputRef.current?.blur();
     setAiQuery(q);
     setAiInput("");
     openModal("aiLoad");
@@ -281,6 +322,14 @@ export default function App() {
   })();
 
   // ─── SHEET STYLE ───
+  const subSheetBase = {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    background: C.card, borderRadius: "22px 22px 0 0",
+    maxHeight: "88%", display: "flex", flexDirection: "column",
+    boxShadow: "0 -4px 20px rgba(0,0,0,0.12)",
+    zIndex: 12,
+    ...(subModalAnim ? { animation: "slideUp .25s ease-out" } : {}),
+  };
   const sheetBase = {
     position: "absolute", bottom: 0, left: 0, right: 0,
     background: C.card, borderRadius: "22px 22px 0 0",
@@ -327,7 +376,7 @@ export default function App() {
             onBlur={() => { blurTimer.current = setTimeout(() => setShowHints(false), 200); }}
             onKeyDown={e => { if (e.key === "Enter" && aiInput.trim()) runAI(aiInput.trim()); }}
             placeholder="예: 전세 대출 서류 발급해주세요"
-            style={{ flex:1, padding:"10px 14px", borderRadius:12, border:`1.5px solid ${C.border}`, fontSize:14, outline:"none", fontFamily:C.font, transition:"border .2s" }}
+            style={{ flex:1, minWidth:0, padding:"10px 14px", borderRadius:12, border:`1.5px solid ${C.border}`, fontSize:14, outline:"none", fontFamily:C.font, transition:"border .2s" }}
             onFocusCapture={e => { e.target.style.borderColor = C.mint; }}
             onBlurCapture={e => { e.target.style.borderColor = C.border; }}
           />
@@ -338,7 +387,7 @@ export default function App() {
             {AI_DATA.slice(0,5).map(d => (
               <button
                 key={d.q}
-                onMouseDown={e => { e.preventDefault(); clearTimeout(blurTimer.current); runAI(d.q); }}
+                onMouseDown={e => { e.preventDefault(); clearTimeout(blurTimer.current); inputRef.current?.blur(); runAI(d.q); }}
                 style={{ background:C.mintLight, color:C.mintDark, border:`1px solid ${C.mint}33`, borderRadius:20, padding:"6px 12px", fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:C.font }}
               >{d.q}</button>
             ))}
@@ -413,33 +462,42 @@ export default function App() {
         <div style={{ fontSize:22, fontWeight:800 }}>총 {cart.length}건 · {exempt ? "면제" : fmtFee(totalFee)}</div>
       </div>
       {/* Items */}
-      {cart.map(c => (
-        <div key={c.key} style={{ background:C.card, borderRadius:14, padding:16, marginBottom:10, border:`1px solid ${C.border}` }}>
-          <div style={{ fontWeight:700, fontSize:15, color:C.text, marginBottom:6 }}>{c.item.name}</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6, fontSize:12 }}>
-            {c.opt && <span style={{ background:C.mintLight, color:C.mintDark, padding:"2px 8px", borderRadius:8 }}>{c.opt}</span>}
-            {c.qual && <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.qual.nm}</span>}
-            {c.target && <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.target}{c.count > 1 ? ` ${c.count}명` : ""}</span>}
-            <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.qty}부</span>
+      {sortByCategory(cart).map(group => (
+        <div key={group.cat}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, margin:"12px 0 8px" }}>
+            <div style={{ flex:1, height:1, background:C.border }} />
+            <span style={{ fontSize:12, fontWeight:700, color:C.sub, whiteSpace:"nowrap" }}>{CATS.find(ct=>ct.id===group.cat)?.icon} {group.cat}</span>
+            <div style={{ flex:1, height:1, background:C.border }} />
           </div>
-          {Object.entries(c.options).map(([k,v]) => (
-            <div key={k} style={{ fontSize:11, color:C.sub, marginTop:4 }}>{k}: {v}</div>
+          {group.items.map(c => (
+            <div key={c.key} style={{ background:C.card, borderRadius:14, padding:16, marginBottom:10, border:`1px solid ${C.border}` }}>
+              <div style={{ fontWeight:700, fontSize:15, color:C.text, marginBottom:6 }}>{c.item.name}</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6, fontSize:12 }}>
+                {c.opt && <span style={{ background:C.mintLight, color:C.mintDark, padding:"2px 8px", borderRadius:8 }}>{c.opt}</span>}
+                {c.qual && <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.qual.nm}</span>}
+                {c.target && <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.target}{c.count > 1 ? ` ${c.count}명` : ""}</span>}
+                <span style={{ background:"#F0F0F0", color:C.desc, padding:"2px 8px", borderRadius:8 }}>{c.qty}부</span>
+              </div>
+              {Object.entries(c.options).map(([k,v]) => (
+                <div key={k} style={{ fontSize:11, color:C.sub, marginTop:4 }}>{k}: {v}</div>
+              ))}
+              {c.qual?.docs?.length > 0 && (
+                <button onClick={(e) => { e.stopPropagation(); setDocsContent(c.qual.docs.map(d => c.qual.nc ? `${d} ${c.count}장` : d)); openModal("docs"); }}
+                  style={{ marginTop:8, background:C.amberBg, color:C.amber, border:`1px solid ${C.amber}33`, borderRadius:10, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:C.font }}>
+                  📋 필요서류 확인
+                </button>
+              )}
+              <div style={{ textAlign:"right", fontSize:14, fontWeight:700, color: c.qual?.ex || exempt ? C.green : C.text, marginTop:8 }}>
+                {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
+              </div>
+            </div>
           ))}
-          {c.qual?.docs?.length > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); setDocsContent(c.qual.docs.map(d => c.qual.nc ? `${d} ${c.count}장` : d)); openModal("docs"); }}
-              style={{ marginTop:8, background:C.amberBg, color:C.amber, border:`1px solid ${C.amber}33`, borderRadius:10, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:C.font }}>
-              📋 필요서류 확인
-            </button>
-          )}
-          <div style={{ textAlign:"right", fontSize:14, fontWeight:700, color: c.qual?.ex || exempt ? C.green : C.text, marginTop:8 }}>
-            {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
-          </div>
         </div>
       ))}
       {/* Footer */}
       <div style={{ padding:"16px 0", display:"flex", gap:10, marginTop:8 }}>
         <button onClick={goHome} style={{ flex:1, padding:"14px", borderRadius:14, border:`2px solid ${C.mint}`, background:"#fff", color:C.mint, fontWeight:700, fontSize:15, cursor:"pointer", fontFamily:C.font }}>수정하기</button>
-        <button style={{ flex:1, padding:"14px", borderRadius:14, border:"none", background:C.mint, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", fontFamily:C.font }}>QR 출력</button>
+        <button onClick={() => openModal("receipt")} style={{ flex:1, padding:"14px", borderRadius:14, border:"none", background:C.mint, color:"#fff", fontWeight:700, fontSize:15, cursor:"pointer", fontFamily:C.font }}>QR 출력</button>
       </div>
       <div style={{ height: 20 }} />
     </div>
@@ -465,10 +523,10 @@ export default function App() {
   );
 
   // ─── DETAIL SHEET ───
-  const renderDetailSheet = () => {
+  const renderDetailSheet = (asSubModal = false) => {
     if (!detailItem) return null;
     return (
-      <div style={sheetBase} onClick={e => e.stopPropagation()}>
+      <div style={asSubModal ? subSheetBase : sheetBase} onClick={e => e.stopPropagation()}>
         {/* Handle */}
         <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 6px" }}>
           <div style={{ width:36, height:4, borderRadius:2, background:"#DDD" }} />
@@ -584,7 +642,12 @@ export default function App() {
         <div style={{ width:36, height:4, borderRadius:2, background:"#DDD" }} />
       </div>
       <div style={{ padding:"0 20px 8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <div style={{ fontSize:18, fontWeight:800, color:C.text }}>민원목록</div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ fontSize:18, fontWeight:800, color:C.text }}>민원목록</div>
+          {cart.length > 0 && (
+            <button onClick={(e) => { e.stopPropagation(); if(window.confirm("민원목록을 모두 삭제하시겠습니까?")) setCart([]); }} style={{ background:"none", border:"none", fontSize:13, fontWeight:600, color:C.red, cursor:"pointer", fontFamily:C.font, padding:"2px 4px" }}>전체삭제</button>
+          )}
+        </div>
         <button onClick={closeModal} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:C.sub }}>✕</button>
       </div>
       <div style={{ flex:1, overflow:"auto", padding:"0 20px" }}>
@@ -595,25 +658,34 @@ export default function App() {
             <div style={{ fontSize:12, marginTop:4 }}>카테고리에서 민원을 선택해주세요</div>
           </div>
         ) : (
-          cart.map(c => (
-            <div key={c.key} style={{ background:"#F9F9F9", borderRadius:12, padding:14, marginBottom:8, position:"relative" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                <div>
-                  <div style={{ fontWeight:700, fontSize:14, color:C.text }}>{c.item.name}</div>
-                  <div style={{ fontSize:11, color:C.desc, marginTop:2 }}>
-                    {[c.opt, c.qual?.nm, c.target && `${c.target}${c.count > 1 ? ` ${c.count}명` : ""}`].filter(Boolean).join(" · ")}
+          sortByCategory(cart).map(group => (
+            <div key={group.cat}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, margin:"10px 0 6px" }}>
+                <div style={{ flex:1, height:1, background:C.border }} />
+                <span style={{ fontSize:11, fontWeight:700, color:C.sub, whiteSpace:"nowrap" }}>{CATS.find(ct=>ct.id===group.cat)?.icon} {group.cat}</span>
+                <div style={{ flex:1, height:1, background:C.border }} />
+              </div>
+              {group.items.map(c => (
+                <div key={c.key} style={{ background:"#F9F9F9", borderRadius:12, padding:14, marginBottom:8, position:"relative" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:14, color:C.text }}>{c.item.name}</div>
+                      <div style={{ fontSize:11, color:C.desc, marginTop:2 }}>
+                        {[c.opt, c.qual?.nm, c.target && `${c.target}${c.count > 1 ? ` ${c.count}명` : ""}`].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); removeFromCart(c.key); }} style={{ background:C.redBg, color:C.red, border:"none", borderRadius:8, width:28, height:28, fontSize:14, cursor:"pointer", fontWeight:700 }}>✕</button>
+                  </div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
+                    {c.item.tp === "제증명" && (
+                      <Stepper value={c.qty} onChange={v => updateCartQty(c.key, v - c.qty)} />
+                    )}
+                    <div style={{ fontSize:14, fontWeight:700, color: c.qual?.ex || exempt ? C.green : C.text, marginLeft:"auto" }}>
+                      {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
+                    </div>
                   </div>
                 </div>
-                <button onClick={e => { e.stopPropagation(); removeFromCart(c.key); }} style={{ background:C.redBg, color:C.red, border:"none", borderRadius:8, width:28, height:28, fontSize:14, cursor:"pointer", fontWeight:700 }}>✕</button>
-              </div>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
-                {c.item.tp === "제증명" && (
-                  <Stepper value={c.qty} onChange={v => updateCartQty(c.key, v - c.qty)} />
-                )}
-                <div style={{ fontSize:14, fontWeight:700, color: c.qual?.ex || exempt ? C.green : C.text, marginLeft:"auto" }}>
-                  {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
-                </div>
-              </div>
+              ))}
             </div>
           ))
         )}
@@ -666,7 +738,7 @@ export default function App() {
       <div style={{ flex:1, overflow:"auto", padding:"0 20px 20px" }}>
         <div style={{ fontSize:13, color:C.desc, marginBottom:10 }}>필요한 민원 {aiResults.length}건을 찾았습니다</div>
         {aiResults.map(it => (
-          <button key={it.id} onClick={() => { setModal(null); setTimeout(() => openDetail(it), 50); }}
+          <button key={it.id} onClick={(e) => { e.stopPropagation(); openDetail(it, true); }}
             style={{ display:"block", width:"100%", background:"#F9F9F9", border:`1.5px solid ${C.border}`, borderRadius:14, padding:"14px 16px", marginBottom:8, textAlign:"left", cursor:"pointer", fontFamily:C.font, transition:"border .15s" }}
             onMouseDown={e => e.currentTarget.style.borderColor = C.mint}
             onMouseUp={e => e.currentTarget.style.borderColor = C.border}
@@ -703,6 +775,90 @@ export default function App() {
       </div>
     </div>
   );
+
+
+  // ─── Receipt (Thermal Print Preview) ───
+  const renderReceipt = () => {
+    const grouped = sortByCategory(cart);
+    const allDocs = [];
+    cart.forEach(c => {
+      if (c.qual?.docs) c.qual.docs.forEach(d => {
+        const label = c.qual.nc && c.count > 1 ? `${d} ${c.count}장` : d;
+        if (!allDocs.includes(label)) allDocs.push(label);
+      });
+    });
+    return (
+      <div style={{ ...sheetBase, maxHeight:"92%" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 6px" }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:"#DDD" }} />
+        </div>
+        <div style={{ padding:"0 20px 8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div style={{ fontSize:16, fontWeight:800, color:C.text }}>감열지 미리보기</div>
+          <button onClick={closeModal} style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:C.sub }}>✕</button>
+        </div>
+        <div style={{ flex:1, overflow:"auto", padding:"0 16px 20px", display:"flex", justifyContent:"center" }}>
+          {/* Thermal paper */}
+          <div style={{ width:280, background:"#fff", border:"1px solid #ddd", borderRadius:4, padding:"16px 12px", fontFamily:"'Courier New', monospace", fontSize:11, lineHeight:1.6, color:"#222", boxShadow:"0 2px 8px rgba(0,0,0,0.08)" }}>
+            <div style={{ textAlign:"center", fontWeight:700, fontSize:13, marginBottom:4 }}>세종 민원 프리패스</div>
+            <div style={{ textAlign:"center", fontSize:10, marginBottom:8, color:"#666" }}>요 청 서</div>
+            <div style={{ borderTop:"2px dashed #999", marginBottom:8 }} />
+
+            {grouped.map(group => (
+              <div key={group.cat}>
+                <div style={{ textAlign:"center", fontSize:10, fontWeight:700, color:"#555", margin:"6px 0 4px" }}>── {group.cat} ──</div>
+                {group.items.map(c => (
+                  <div key={c.key} style={{ marginBottom:6, paddingBottom:4, borderBottom:"1px dotted #ccc" }}>
+                    <div style={{ fontWeight:700, fontSize:11 }}>{c.item.name}</div>
+                    <div style={{ fontSize:10, color:"#555" }}>
+                      {[
+                        c.item.tp === "제증명" ? "제증명" : "신청",
+                        c.qual?.nm,
+                        c.target && `대상:${c.target}${c.count > 1 ? `(${c.count}명)` : ""}`,
+                        c.item.tp === "제증명" && `${c.qty}부`,
+                      ].filter(Boolean).join(" / ")}
+                    </div>
+                    {c.opt && <div style={{ fontSize:10, color:"#555" }}>유형: {c.opt}</div>}
+                    {Object.entries(c.options).map(([k,v]) => (
+                      <div key={k} style={{ fontSize:10, color:"#555" }}>{k}: {v}</div>
+                    ))}
+                    <div style={{ textAlign:"right", fontSize:10, fontWeight:700 }}>
+                      {c.qual?.ex || exempt ? "면제" : fmtFee(c.item.fee * c.qty * (c.qual?.nc ? c.count : 1))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {allDocs.length > 0 && (
+              <>
+                <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
+                <div style={{ fontWeight:700, fontSize:10, marginBottom:2 }}>[ 필요서류 ]</div>
+                {allDocs.map((d,i) => <div key={i} style={{ fontSize:10, color:"#555" }}>{i+1}. {d}</div>)}
+              </>
+            )}
+
+            <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
+            <div style={{ display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:12 }}>
+              <span>총 수수료</span>
+              <span style={{ color: exempt ? "#22B573" : "#222" }}>{exempt ? "면제" : fmtFee(totalFee)}</span>
+            </div>
+            <div style={{ fontSize:10, color:"#666", marginTop:2 }}>총 {cart.length}건</div>
+
+            {/* QR Code */}
+            <div style={{ borderTop:"2px dashed #999", margin:"10px 0 8px" }} />
+            <div style={{ textAlign:"center" }}>
+              <img src={QR_IMG} alt="QR" style={{ width:120, height:120, imageRendering:"pixelated" }} />
+              <div style={{ fontSize:9, color:"#999", marginTop:4 }}>요청서 QR코드</div>
+            </div>
+
+            <div style={{ borderTop:"2px dashed #999", margin:"8px 0" }} />
+            <div style={{ textAlign:"center", fontSize:9, color:"#999" }}>세종특별자치시 민원여권과</div>
+            <div style={{ textAlign:"center", fontSize:9, color:"#999" }}>감사합니다</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", padding:20, fontFamily:C.font }}>
@@ -754,6 +910,13 @@ export default function App() {
               {modal === "aiLoad" && renderAILoad()}
               {modal === "ai" && renderAIResult()}
               {modal === "docs" && renderDocsModal()}
+              {modal === "receipt" && renderReceipt()}
+              {/* SubModal overlay on top of AI results */}
+              {subModal === "detail" && (
+                <div onClick={(e) => { e.stopPropagation(); closeSubModal(); }} style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.25)", zIndex:11, borderRadius:40 }}>
+                  {renderDetailSheet(true)}
+                </div>
+              )}
             </div>
           )}
         </div>
