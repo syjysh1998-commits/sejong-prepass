@@ -135,35 +135,7 @@ const AI_DATA = [
   { q: "전입세대열람확인서 떼려고요", ids: ["l10"] },
 ];
 
-// ─── STYLES ───
-const C = {
-  bg: "#F5F5F5", card: "#FFFFFF", mint: "#2AC1BC", mintLight: "#E6F7F6", mintDark: "#1A9E99",
-  text: "#1A1A1A", sub: "#999999", desc: "#666666", amber: "#D97706", amberBg: "#FFF7E6",
-  red: "#E84545", redBg: "#FFF0F0", green: "#22B573", greenBg: "#ECFBF3", border: "#EEEEEE",
-  font: "'Pretendard Variable', Pretendard, -apple-system, 'Noto Sans KR', sans-serif",
-};
 
-const fmtFee = (f) => f === 0 ? "무료" : f.toLocaleString() + "원";
-
-const CAT_ORDER = CATS.map(c => c.id);
-
-const sortByCategory = (cartItems) => {
-  const groups = {};
-  cartItems.forEach(c => {
-    const cat = c.item.cat;
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(c);
-  });
-  // Sort within each category by item id
-  const idOrder = ITEMS.map(it => it.id);
-  Object.values(groups).forEach(arr => arr.sort((a, b) => idOrder.indexOf(a.item.id) - idOrder.indexOf(b.item.id)));
-  // Return grouped in category order
-  const result = [];
-  CAT_ORDER.forEach(cat => {
-    if (groups[cat]) result.push({ cat, items: groups[cat] });
-  });
-  return result;
-};
 
 
 // ─── NEW: Centers (대기현황) ───
