@@ -401,18 +401,10 @@ function SejongFooter() {
 /* ─── Main App ─── */
 export default function App() {
   const [selected, setSelected] = useState(null);
-  const [time, setTime] = useState(new Date());
   const [filter, setFilter] = useState("all");
   const [listOpen, setListOpen] = useState(false);
 
-  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
-
   const sel = DONG_DATA.find(d => d.id === selected);
-  const summary = {
-    total: DONG_DATA.reduce((s, d) => s + d.waiting, 0),
-    smooth: DONG_DATA.filter(d => d.waiting < 5).length,
-    busy: DONG_DATA.filter(d => d.waiting >= 10).length,
-  };
   const filtered = DONG_DATA.filter(d => {
     if (filter === "smooth") return d.waiting < 5;
     if (filter === "normal") return d.waiting >= 5 && d.waiting < 10;
@@ -436,42 +428,25 @@ export default function App() {
       {/* ─── 본문 콘텐츠 ─── */}
       <div style={{ padding: "16px 15px 0" }}>
 
-        {/* 현황 요약 카드 */}
-        <div style={{ background: "linear-gradient(135deg, #0057B8 0%, #003A7A 100%)", borderRadius: 14,
-          padding: "16px", marginBottom: 12, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>
-              {time.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "white", fontFamily: "'Courier New',monospace" }}>
-              {time.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            {[
-              { l: "전체 대기", v: `${summary.total}명`, bg: "rgba(255,255,255,0.12)" },
-              { l: "원활", v: `${summary.smooth}개소`, bg: "rgba(34,197,94,0.2)" },
-              { l: "혼잡", v: `${summary.busy}개소`, bg: "rgba(239,68,68,0.2)" },
-            ].map((s, i) => (
-              <div key={i} style={{ background: s.bg, borderRadius: 10, padding: "8px 6px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>{s.l}</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "white", marginTop: 1 }}>{s.v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 필터 */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-          {[{k:"all",l:"전체"},{k:"smooth",l:"🟢 원활"},{k:"normal",l:"🟠 보통"},{k:"busy",l:"🔴 혼잡"}].map(f=>(
+        {/* 필터 (카운트 포함) */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          {[
+            {k:"all",l:"전체",count:DONG_DATA.length},
+            {k:"smooth",l:"원활",count:DONG_DATA.filter(d=>d.waiting<5).length,dot:"#16A34A"},
+            {k:"normal",l:"보통",count:DONG_DATA.filter(d=>d.waiting>=5&&d.waiting<10).length,dot:"#EA580C"},
+            {k:"busy",l:"혼잡",count:DONG_DATA.filter(d=>d.waiting>=10).length,dot:"#DC2626"},
+          ].map(f=>(
             <button key={f.k} onClick={()=>setFilter(f.k)} style={{
               padding: "6px 14px", borderRadius: 20,
               border: filter===f.k ? "1.5px solid #3831AC" : "1.5px solid #ddd",
               background: filter===f.k ? "#EEEDF8" : "white",
               color: filter===f.k ? "#3831AC" : "#777",
               fontSize: 12, fontWeight: 700, cursor: "pointer",
-            }}>{f.l}</button>
+              display: "flex", alignItems: "center", gap: 4,
+            }}>
+              {f.dot && <span style={{width:7,height:7,borderRadius:"50%",background:f.dot}} />}
+              {f.l}({f.count})
+            </button>
           ))}
         </div>
 
