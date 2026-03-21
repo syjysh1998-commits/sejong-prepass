@@ -4,20 +4,20 @@ const MAP_IMG = "/map.png";
 const CI_IMG = "/ci.jpg";
 
 const DONG_DATA = [
-  { id: "haemil", name: "해밀동", x: 50, y: 15, waiting: 3 },
-  { id: "goun", name: "고운동", x: 16, y: 22, waiting: 7 },
-  { id: "areum", name: "아름동", x: 23, y: 21, waiting: 2 },
-  { id: "dodam", name: "도담동", x: 32, y: 30, waiting: 5 },
-  { id: "jongchon", name: "종촌동", x: 24, y: 44, waiting: 12, isMain: true },
-  { id: "eojin", name: "어진동", x: 37, y: 47, waiting: 4 },
-  { id: "naseong", name: "나성동", x: 36, y: 62, waiting: 1 },
-  { id: "dajeong", name: "다정동", x: 18, y: 54, waiting: 6 },
-  { id: "saerom", name: "새롬동", x: 23, y: 66, waiting: 9 },
-  { id: "hansol", name: "한솔동", x: 28, y: 78, waiting: 8 },
-  { id: "boram", name: "보람동", x: 55, y: 77, waiting: 3 },
-  { id: "daepyeong", name: "대평동", x: 42, y: 90, waiting: 2 },
-  { id: "bangok", name: "반곡동", x: 76, y: 57, waiting: 4 },
-  { id: "sodam", name: "소담동", x: 67, y: 68, waiting: 1 },
+  { id: "haemil", name: "해밀동", x: 38, y: 20, waiting: 3 },
+  { id: "goun", name: "고운동", x: 10, y: 28, waiting: 7 },
+  { id: "areum", name: "아름동", x: 18, y: 28, waiting: 2 },
+  { id: "dodam", name: "도담동", x: 28, y: 27, waiting: 5 },
+  { id: "jongchon", name: "종촌동", x: 20, y: 40, waiting: 12, isMain: true },
+  { id: "eojin", name: "어진동", x: 35, y: 42, waiting: 4 },
+  { id: "naseong", name: "나성동", x: 32, y: 56, waiting: 1 },
+  { id: "dajeong", name: "다정동", x: 14, y: 50, waiting: 6 },
+  { id: "saerom", name: "새롬동", x: 18, y: 62, waiting: 9 },
+  { id: "hansol", name: "한솔동", x: 24, y: 72, waiting: 8 },
+  { id: "boram", name: "보람동", x: 48, y: 72, waiting: 3 },
+  { id: "daepyeong", name: "대평동", x: 38, y: 84, waiting: 2 },
+  { id: "bangok", name: "반곡동", x: 72, y: 46, waiting: 4 },
+  { id: "sodam", name: "소담동", x: 58, y: 60, waiting: 1 },
 ];
 
 function getCongestion(w) {
