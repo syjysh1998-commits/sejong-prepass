@@ -67,11 +67,14 @@ function ZoomableMap({ children }) {
   const ref = useRef(null);
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [drag, setDrag] = useState(false);
-  const ds = useRef({ x: 0, y: 0 });
-  const ps = useRef({ x: 0, y: 0 });
-  const ltd = useRef(null);
-  const ltc = useRef(null);
+  const dragState = useRef({ active: false, moved: false, startX: 0, startY: 0, posX: 0, posY: 0 });
+  const pinchState = useRef({ dist: null, cx: null, cy: null });
+  const scaleRef = useRef(1);
+  const posRef = useRef({ x: 0, y: 0 });
+
+  // Keep refs in sync with state
+  useEffect(() => { scaleRef.current = scale; }, [scale]);
+  useEffect(() => { posRef.current = pos; }, [pos]);
 
   const clamp = useCallback((x, y, s) => {
     const el = ref.current; if (!el) return { x, y };
@@ -80,70 +83,145 @@ function ZoomableMap({ children }) {
     return { x: Math.max(-mx, Math.min(mx, x)), y: Math.max(-my, Math.min(my, y)) };
   }, []);
 
-  const onWheel = useCallback((e) => {
-    e.preventDefault(); const el = ref.current; if (!el) return;
-    const r = el.getBoundingClientRect();
-    const cx = e.clientX - r.left - r.width / 2, cy = e.clientY - r.top - r.height / 2;
-    const d = e.deltaY > 0 ? 0.9 : 1.1;
-    setScale(p => { const n = Math.max(1, Math.min(4, p * d)); const rt = n / p;
-      setPos(pp => clamp(cx - rt * (cx - pp.x), cy - rt * (cy - pp.y), n)); return n; });
-  }, [clamp]);
-
+  // Register all native event listeners to avoid React synthetic event issues
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [onWheel]);
 
-  const pDown = (e) => { if (e.pointerType === "touch") return; setDrag(true);
-    ds.current = { x: e.clientX, y: e.clientY }; ps.current = { ...pos }; e.currentTarget.setPointerCapture(e.pointerId); };
-  const pMove = (e) => { if (!drag || e.pointerType === "touch") return;
-    setPos(clamp(ps.current.x + e.clientX - ds.current.x, ps.current.y + e.clientY - ds.current.y, scale)); };
-  const pUp = () => setDrag(false);
-  const tStart = (e) => { if (e.touches.length === 2) {
-    const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
-    ltd.current = Math.hypot(dx, dy);
-    ltc.current = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
-  } else if (e.touches.length === 1) { setDrag(true);
-    ds.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; ps.current = { ...pos }; }};
-  const tMove = (e) => { if (e.touches.length === 2) { e.preventDefault();
-    const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
-    const dist = Math.hypot(dx, dy);
-    if (ltd.current) { const el = ref.current, r = el.getBoundingClientRect();
-      const cx = ltc.current.x - r.left - r.width / 2, cy = ltc.current.y - r.top - r.height / 2;
-      setScale(p => { const n = Math.max(1, Math.min(4, p * dist / ltd.current)); const rt = n / p;
-        setPos(pp => clamp(cx - rt * (cx - pp.x), cy - rt * (cy - pp.y), n)); return n; }); }
-    ltd.current = dist;
-    const nc = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
-    if (ltc.current) setPos(p => clamp(p.x + nc.x - ltc.current.x, p.y + nc.y - ltc.current.y, scale));
-    ltc.current = nc;
-  } else if (e.touches.length === 1 && drag && scale > 1) {
-    setPos(clamp(ps.current.x + e.touches[0].clientX - ds.current.x, ps.current.y + e.touches[0].clientY - ds.current.y, scale)); }};
-  const tEnd = () => { setDrag(false); ltd.current = null; ltc.current = null; };
+    // Wheel zoom
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const cx = e.clientX - r.left - r.width / 2, cy = e.clientY - r.top - r.height / 2;
+      const d = e.deltaY > 0 ? 0.9 : 1.1;
+      const prev = scaleRef.current;
+      const next = Math.max(1, Math.min(4, prev * d));
+      const ratio = next / prev;
+      const p = posRef.current;
+      const np = clamp(cx - ratio * (cx - p.x), cy - ratio * (cy - p.y), next);
+      scaleRef.current = next; posRef.current = np;
+      setScale(next); setPos(np);
+    };
+
+    // Mouse drag
+    const handleMouseDown = (e) => {
+      if (e.button !== 0) return;
+      dragState.current = { active: true, moved: false, startX: e.clientX, startY: e.clientY,
+        posX: posRef.current.x, posY: posRef.current.y };
+    };
+    const handleMouseMove = (e) => {
+      const ds = dragState.current; if (!ds.active) return;
+      const dx = e.clientX - ds.startX, dy = e.clientY - ds.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) ds.moved = true;
+      if (ds.moved) {
+        const np = clamp(ds.posX + dx, ds.posY + dy, scaleRef.current);
+        posRef.current = np; setPos(np);
+      }
+    };
+    const handleMouseUp = () => { dragState.current.active = false; };
+
+    // Touch: drag + pinch
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchState.current = {
+          dist: Math.hypot(dx, dy),
+          cx: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          cy: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+        dragState.current.active = false;
+      } else if (e.touches.length === 1) {
+        dragState.current = { active: true, moved: false,
+          startX: e.touches[0].clientX, startY: e.touches[0].clientY,
+          posX: posRef.current.x, posY: posRef.current.y };
+      }
+    };
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const ps = pinchState.current;
+        if (!ps.dist) return;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const ncx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const ncy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+        // Zoom
+        const r = el.getBoundingClientRect();
+        const cx = ps.cx - r.left - r.width / 2;
+        const cy = ps.cy - r.top - r.height / 2;
+        const prev = scaleRef.current;
+        const next = Math.max(1, Math.min(4, prev * (dist / ps.dist)));
+        const ratio = next / prev;
+        const p = posRef.current;
+        let np = { x: cx - ratio * (cx - p.x) + (ncx - ps.cx), y: cy - ratio * (cy - p.y) + (ncy - ps.cy) };
+        np = clamp(np.x, np.y, next);
+
+        scaleRef.current = next; posRef.current = np;
+        setScale(next); setPos(np);
+        pinchState.current = { dist, cx: ncx, cy: ncy };
+      } else if (e.touches.length === 1 && dragState.current.active && scaleRef.current > 1) {
+        const ds = dragState.current;
+        const dx = e.touches[0].clientX - ds.startX;
+        const dy = e.touches[0].clientY - ds.startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) ds.moved = true;
+        if (ds.moved) {
+          e.preventDefault();
+          const np = clamp(ds.posX + dx, ds.posY + dy, scaleRef.current);
+          posRef.current = np; setPos(np);
+        }
+      }
+    };
+    const handleTouchEnd = () => {
+      dragState.current.active = false;
+      pinchState.current = { dist: null, cx: null, cy: null };
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    el.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    el.addEventListener("touchstart", handleTouchStart, { passive: false });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [clamp]);
+
+  const isDragging = dragState.current.active && dragState.current.moved;
 
   return (
     <div style={{ position: "relative" }}>
-      <div ref={ref} onPointerDown={pDown} onPointerMove={pMove} onPointerUp={pUp}
-        onTouchStart={tStart} onTouchMove={tMove} onTouchEnd={tEnd}
+      <div ref={ref}
         style={{ position: "relative", width: "100%", paddingBottom: "74.3%", overflow: "hidden",
-          cursor: drag ? "grabbing" : "grab", touchAction: "none" }}>
+          cursor: isDragging ? "grabbing" : "grab", touchAction: scale > 1 ? "none" : "pan-y" }}>
         <div style={{ position: "absolute", inset: 0,
           transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`, transformOrigin: "center center",
-          transition: drag ? "none" : "transform 0.15s ease-out" }}>
+          transition: isDragging ? "none" : "transform 0.15s ease-out" }}>
           <img src={MAP_IMG} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none" }} />
           <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.08)" }} />
           {children(scale)}
         </div>
       </div>
       <div style={{ position: "absolute", bottom: 10, right: 10, zIndex: 20, display: "flex", flexDirection: "column", gap: 4 }}>
-        {[{l:"+",f:()=>setScale(p=>{const n=Math.min(4,p*1.3);setPos(pp=>clamp(pp.x,pp.y,n));return n;})},
-          {l:"−",f:()=>setScale(p=>{const n=Math.max(1,p/1.3);setPos(pp=>clamp(pp.x,pp.y,n));return n;})}
+        {[{l:"+",f:()=>{const n=Math.min(4,scaleRef.current*1.3);const np=clamp(posRef.current.x,posRef.current.y,n);scaleRef.current=n;posRef.current=np;setScale(n);setPos(np);}},
+          {l:"−",f:()=>{const n=Math.max(1,scaleRef.current/1.3);const np=clamp(posRef.current.x,posRef.current.y,n);scaleRef.current=n;posRef.current=np;setScale(n);setPos(np);}}
         ].map((b,i)=>(
           <button key={i} onClick={b.f} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid #ccc", background: "white",
             fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 1px 4px rgba(0,0,0,0.1)", color: "#333" }}>{b.l}</button>
         ))}
-        {scale > 1.05 && <button onClick={()=>{setScale(1);setPos({x:0,y:0});}} style={{ width: 32, height: 32, borderRadius: 6,
+        {scale > 1.05 && <button onClick={()=>{scaleRef.current=1;posRef.current={x:0,y:0};setScale(1);setPos({x:0,y:0});}} style={{ width: 32, height: 32, borderRadius: 6,
           border: "1px solid #ccc", background: "white", fontSize: 10, fontWeight: 700, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.1)", color: "#888" }}>↺</button>}
       </div>
@@ -398,7 +476,7 @@ export default function App() {
         </div>
 
         {/* 지도 */}
-        <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #ddd" }} onClick={()=>setSelected(null)}>
+        <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #ddd" }} onClick={(e)=>{if(e.detail===1)setSelected(null);}}>
           <ZoomableMap>
             {(scale)=>filtered.map(d=>(
               <MapPin key={d.id} dong={d} isSelected={selected===d.id} onClick={setSelected} scale={scale} />
