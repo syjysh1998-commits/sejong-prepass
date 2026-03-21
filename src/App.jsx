@@ -6,7 +6,7 @@ const CI_IMG = "/ci.jpg";
 const DONG_DATA = [
   { id: "haemil", name: "해밀동", x: 40, y: 12, waiting: 3 },
   { id: "goun", name: "고운동", x: 11, y: 22, waiting: 7 },
-  { id: "areum", name: "아름동", x: 23, y: 25, waiting: 2 },
+  { id: "areum", name: "아름동", x: 20, y: 30, waiting: 2 },
   { id: "dodam", name: "도담동", x: 29, y: 31, waiting: 5 },
   { id: "jongchon", name: "종촌동", x: 21, y: 43, waiting: 12, isMain: true },
   { id: "eojin", name: "어진동", x: 32, y: 44, waiting: 4 },
